@@ -1,4 +1,5 @@
 from collections import Counter
+from typing import Callable
 
 
 def _format(object_type: str, tasks: list[dict]):
@@ -18,33 +19,51 @@ def _format(object_type: str, tasks: list[dict]):
     return objects_count, objects
 
 
+def _format_field(title: str, object: dict, field: str):
+    res = "".join([f"\n - {field}: {field_count}" for field, field_count in object.get(field, {}).items()])
+    if res:
+        return title + ": " + res
+
+
 def format_installer_tasks(tasks: list[dict]):
     divisions_count, divisions = _format("divisions", tasks)
+    employees_count, employees = _format("employees", tasks)
 
-    return "\n".join(
-        [
-            f"""
-<b>{division}</b>:
-Выполнено заданий: {count}
-Причины обращений: {"".join([f"\n - {reason}: {reason_count}" for reason, reason_count in divisions.get(division, {}).get("reasons", {}).items()]) or "-"}
-Решения: {"".join([f"\n - {solve}: {solve_count}" for solve, solve_count in divisions.get(division, {}).get("solves", {}).items()]) or "-"}
-"""
-            for division, count in dict(Counter(divisions_count)).items()
-        ]
-    )
+    def _get_fields(object):
+        return divisions.get(object, employees.get(object, {}))
+
+    content = ""
+    for object, count in dict(Counter(divisions_count + employees_count)).items():
+        object_content = f"<b>{object}</b>\nВыполнено заданий: {count}"
+
+        reasons = _format_field("Причины обращений", _get_fields(object), "reasons")
+        if reasons:
+            object_content += "\n" + reasons
+
+        solves = _format_field("Решения", _get_fields(object), "solves")
+        if solves:
+            object_content += "\n" + solves
+
+        content += "\n\n" + object_content
+
+    return content
 
 
 def format_operator_tasks(tasks: list[dict]):
     employees_count, employees = _format("employees", tasks)
 
-    return "\n".join(
-        [
-            f"""
-<b>{employee}</b>:
-Создано обращений: {count}
-Виды обращений: {"".join([f"\n - {reason}: {reason_count}" for reason, reason_count in employees.get(employee, {}).get("reasons", {}).items()]) or "-"}
-Решения: {"".join([f"\n - {solve}: {solve_count}" for solve, solve_count in employees.get(employee, {}).get("solves", {}).items()]) or "-"}
-"""
-            for employee, count in dict(Counter(employees_count)).items()
-        ]
-    )
+    content = ""
+    for object, count in dict(Counter(employees_count)).items():
+        object_content = f"<b>{object}</b>\nСоздано обращений: {count}"
+
+        reasons = _format_field("Виды обращений", employees.get(object, {}), "reasons")
+        if reasons:
+            object_content += "\n" + reasons
+
+        solves = _format_field("Решения", employees.get(object, {}), "solves")
+        if solves:
+            object_content += "\n" + solves
+
+        content += "\n\n" + object_content
+
+    return content
