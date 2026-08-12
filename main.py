@@ -1,7 +1,8 @@
 from asyncio import run
-from datetime import datetime, time
+from datetime import datetime, time, tzinfo
 from json import loads
 from os import getenv
+from zoneinfo import ZoneInfo
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
@@ -26,10 +27,10 @@ OPERATORS_GROUP_ID = int(getenv("OPERATORS_GROUP_ID", 0))
 DAY_SHIFT_EMPLOYEES = list(map(int, loads(getenv("DAY_SHIFT_EMPLOYEES", "[]"))))
 NIGHT_SHIFT_EMPLOYEES = list(map(int, loads(getenv("NIGHT_SHIFT_EMPLOYEES", "[]"))))
 
-DAY_START = time.fromisoformat(getenv("DAY_START", ""))
-DAY_END = time.fromisoformat(getenv("DAY_END", ""))
-NIGHT_START = time.fromisoformat(getenv("NIGHT_START", ""))
-NIGHT_END = time.fromisoformat(getenv("NIGHT_END", ""))
+DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+NIGHT_START = time.fromisoformat(getenv("NIGHT_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+NIGHT_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 
 
 async def installer_report():
@@ -75,8 +76,7 @@ async def report(message: Message):
 
 
 async def main():
-    schedule = Scheduler()
-    DAY_END = time(hour=17, minute=2, second=20)
+    schedule = Scheduler(tzinfo=ZoneInfo("Asia/Bishkek"))
     schedule.daily(DAY_END, installer_report)
     schedule.daily(DAY_END, operator_day_report)
     schedule.daily(NIGHT_END, operator_night_report)
