@@ -46,7 +46,7 @@ def format_installer_tasks(tasks: list[dict]):
 
         content += "\n\n" + object_content
 
-    return content
+    return content or "Сегодня не было выполнено ни одного задания"
 
 
 def format_operator_tasks(tasks: list[dict]):
@@ -66,4 +66,4 @@ def format_operator_tasks(tasks: list[dict]):
 
         content += "\n\n" + object_content
 
-    return content
+    return content or "За эту смену не было выполнено ни одного задания"
