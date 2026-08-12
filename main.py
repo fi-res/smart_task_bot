@@ -1,5 +1,5 @@
 from asyncio import run
-from datetime import datetime, time, tzinfo
+from datetime import datetime, time
 from json import loads
 from os import getenv
 from zoneinfo import ZoneInfo

@@ -1,5 +1,4 @@
 from collections import Counter
-from typing import Callable
 
 
 def _format(object_type: str, tasks: list[dict]):
