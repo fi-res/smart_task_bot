@@ -55,7 +55,7 @@ async def operator_night_report():
     await bot.send_message(
         OPERATORS_GROUP_ID,
         "<b>Отчет по работе операторов <i>(2 смена)</i></b>\n"
-        + format_operator_tasks(get_operator_tasks(DAY_SHIFT_EMPLOYEES, NIGHT_START, NIGHT_END))
+        + format_operator_tasks(get_operator_tasks(NIGHT_SHIFT_EMPLOYEES, NIGHT_START, NIGHT_END, next_day=True))
     )
     print("sent report")
 

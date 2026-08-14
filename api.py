@@ -1,4 +1,4 @@
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from os import getenv
 
 from requests import Session
@@ -20,13 +20,17 @@ def get_installer_tasks(day_start: time, day_end: time):
     ).json()
 
 
-def get_operator_tasks(ids: list[int], shift_start: time, shift_end: time):
+def get_operator_tasks(ids: list[int], shift_start: time, shift_end: time, next_day: bool = False):
     print(f"get operator tasks from {shift_start} to {shift_end} for {ids}")
+    completed_at_to = datetime.now().replace(hour=shift_end.hour, minute=shift_end.minute, second=shift_end.second)
+    if next_day:
+        completed_at_to += timedelta(days=1)
+
     return session.get(
         f"{getenv('API_URL', '')}/tasks",
         {
             "completed_at_from": datetime.now().replace(hour=shift_start.hour, minute=shift_start.minute, second=shift_start.second).isoformat(),
-            "completed_at_to": datetime.now().replace(hour=shift_end.hour, minute=shift_end.minute, second=shift_end.second).isoformat(),
+            "completed_at_to": completed_at_to.isoformat(),
             "type": ",".join(map(str, [49, 43, 66, 44])),
             "author_id": ",".join(map(str, ids))
         },
