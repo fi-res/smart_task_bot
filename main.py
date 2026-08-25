@@ -24,8 +24,9 @@ dp = Dispatcher()
 INSTALLERS_GROUP_ID = int(getenv("INSTALLERS_GROUP_ID", 0))
 OPERATORS_GROUP_ID = int(getenv("OPERATORS_GROUP_ID", 0))
 
-DAY_SHIFT_EMPLOYEES = list(map(int, loads(getenv("DAY_SHIFT_EMPLOYEES", "[]"))))
-NIGHT_SHIFT_EMPLOYEES = list(map(int, loads(getenv("NIGHT_SHIFT_EMPLOYEES", "[]"))))
+DAY_SHIFT_OPERATORS = list(map(int, loads(getenv("DAY_SHIFT_OPERATORS", "[]"))))
+NIGHT_SHIFT_OPERATORS = list(map(int, loads(getenv("NIGHT_SHIFT_OPERATORS", "[]"))))
+INSTALLERS = list(map(int, loads(getenv("INSTALLERS", "[]"))))
 
 DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
@@ -45,7 +46,7 @@ async def operator_day_report():
     print("make operator day report")
     await bot.send_message(
         OPERATORS_GROUP_ID,
-        "<b>Отчет по работе операторов <i>(1 смена)</i></b>\n" + format_operator_tasks(get_operator_tasks(DAY_SHIFT_EMPLOYEES, DAY_START, DAY_END))
+        "<b>Отчет по работе операторов <i>(1 смена)</i></b>\n" + format_operator_tasks(get_operator_tasks(DAY_SHIFT_OPERATORS, DAY_START, DAY_END))
     )
     print("sent report")
 
@@ -55,7 +56,7 @@ async def operator_night_report():
     await bot.send_message(
         OPERATORS_GROUP_ID,
         "<b>Отчет по работе операторов <i>(2 смена)</i></b>\n"
-        + format_operator_tasks(get_operator_tasks(NIGHT_SHIFT_EMPLOYEES, NIGHT_START, NIGHT_END, next_day=True))
+        + format_operator_tasks(get_operator_tasks(NIGHT_SHIFT_OPERATORS, NIGHT_START, NIGHT_END, next_day=True))
     )
     print("sent report")
 

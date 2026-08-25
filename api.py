@@ -31,7 +31,7 @@ def get_operator_tasks(ids: list[int], shift_start: time, shift_end: time, next_
         {
             "completed_at_from": datetime.now().replace(hour=shift_start.hour, minute=shift_start.minute, second=shift_start.second).isoformat(),
             "completed_at_to": completed_at_to.isoformat(),
-            "type": ",".join(map(str, [49, 43, 66, 44])),
+            "type": ",".join(map(str, [49, 43, 66, 44, 28, 26, 37, 64, 38])),
             "author_id": ",".join(map(str, ids))
         },
         timeout=60

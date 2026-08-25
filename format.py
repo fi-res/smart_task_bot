@@ -1,68 +1,127 @@
-from collections import Counter
+from abc import ABC, abstractmethod
+from collections import defaultdict
 
 
-def _format(object_type: str, tasks: list[dict]):
-    objects_count = []
-    objects = {}
-    for task in tasks:
-        objects_count.extend([object["name"] for object in task[object_type]])
-        for object in task[object_type]:
+class Staff(ABC):
+    def __init__(self, name: str, tasks: list[dict]):
+        self.name = name
+        self.reasons: dict[str, int] = defaultdict(int)
+        self.solves: dict[str, int] = defaultdict(int)
+        self.feed(tasks)
+
+    def _feed_reasons_and_solves(self, tasks: list[dict]):
+        for task in tasks:
             if task["appeal_reason"]:
-                objects.setdefault(object["name"], {}).setdefault("reasons", {}).setdefault(task["appeal_reason"], 0)
-                objects[object["name"]]["reasons"][task["appeal_reason"]] += 1  # cant change value of setdefaulted field inline
-
+                self.reasons[task["appeal_reason"]] += 1
             if task["solve"]:
-                objects.setdefault(object["name"], {}).setdefault("solves", {}).setdefault(task["solve"], 0)
-                objects[object["name"]]["solves"][task["solve"]] += 1
+                self.solves[task["solve"]] += 1
 
-    return objects_count, objects
+    def _format_reasons(self):
+        return "\n".join((f" - {k}: {v}" for k, v in self.reasons.items()))
 
+    def _format_solves(self):
+        return "\n".join((f" - {k}: {v}" for k, v in self.solves.items()))
 
-def _format_field(title: str, object: dict, field: str):
-    res = "".join([f"\n - {field}: {field_count}" for field, field_count in object.get(field, {}).items()])
-    if res:
-        return title + ": " + res
+    @abstractmethod
+    def _feed_counters(self, tasks: list[dict]): ...
 
+    def feed(self, tasks: list[dict]):
+        self._feed_reasons_and_solves(tasks)
+        self._feed_counters(tasks)
 
-def format_installer_tasks(tasks: list[dict]):
-    divisions_count, divisions = _format("divisions", tasks)
-    employees_count, employees = _format("employees", tasks)
-
-    def _get_fields(object):
-        return divisions.get(object, employees.get(object, {}))
-
-    content = ""
-    for object, count in dict(Counter(divisions_count + employees_count)).items():
-        object_content = f"<b>{object}</b>\nВыполнено заданий: {count}"
-
-        reasons = _format_field("Причины обращений", _get_fields(object), "reasons")
-        if reasons:
-            object_content += "\n" + reasons
-
-        solves = _format_field("Решения", _get_fields(object), "solves")
-        if solves:
-            object_content += "\n" + solves
-
-        content += "\n\n" + object_content
-
-    return content or "Сегодня не было выполнено ни одного задания"
+    @abstractmethod
+    def format(self) -> str | None: ...
 
 
-def format_operator_tasks(tasks: list[dict]):
-    employees_count, employees = _format("employees", tasks)
+class Installer(Staff):
+    def __init__(self, name: str, tasks: list[dict]):
+        self.completed_tasks = 0
+        super().__init__(name, tasks)
 
-    content = ""
-    for object, count in dict(Counter(employees_count)).items():
-        object_content = f"<b>{object}</b>\nСоздано обращений: {count}"
+    def _feed_counters(self, tasks: list[dict]):
+        self.completed_tasks += len(tasks)
 
-        reasons = _format_field("Виды обращений", employees.get(object, {}), "reasons")
-        if reasons:
-            object_content += "\n" + reasons
+    def format(self) -> str | None:
+        content = f"<b>{self.name}</b>"
+        if self.completed_tasks:
+            content += f"\nВыполнено заданий: {self.completed_tasks}"
+        if self.reasons:
+            content += f"\nПричины обращений:\n{self._format_reasons()}"
+        if self.solves:
+            content += f"\nРешения:\n{self._format_solves()}"
 
-        solves = _format_field("Решения", employees.get(object, {}), "solves")
-        if solves:
-            object_content += "\n" + solves
+        if content.count("\n") > 0:
+            return content
 
-        content += "\n\n" + object_content
 
-    return content or "За эту смену не было выполнено ни одного задания"
+class Operator(Staff):
+    def __init__(self, name: str, tasks: list[dict]):
+        self.appeals = 0
+        self.connections = 0
+        self.repairs = 0
+        self.magistral_repairs = 0
+        self.mitris_repairs = 0
+        super().__init__(name, tasks)
+
+    def _feed_counters(self, tasks: list[dict]):
+        for task in tasks:
+            match task["type"]["id"]:
+                case 44:
+                    self.appeals += 1
+                case 28 | 26:
+                    self.connections += 1
+                case 37:
+                    self.repairs += 1
+                case 38:
+                    self.magistral_repairs += 1
+                case 64:
+                    self.mitris_repairs += 1
+
+    def format(self) -> str | None:
+        content = f"<b>{self.name}</b>"
+        if self.appeals:
+            content += f"\nСоздано обращений: {self.appeals}"
+        if self.connections:
+            content += f"\nСоздано заявок на подключение: {self.connections}"
+        if self.repairs:
+            content += f"\nСоздано заявок на ремонт: {self.repairs}"
+        if self.magistral_repairs:
+            content += f"\nСоздано заявок на магистральный ремонт: {self.magistral_repairs}"
+        if self.mitris_repairs:
+            content += f"\nСоздано заявок на ремонт Mitris: {self.mitris_repairs}"
+        if self.reasons:
+            content += f"\nПричины обращений:\n{self._format_reasons()}"
+        if self.solves:
+            content += f"\nРешения:\n{self._format_solves()}"
+
+        if content.count("\n") > 0:
+            return content
+
+
+def format_installer_tasks(tasks: list[dict]) -> str:
+    objects: dict[str, list[dict]] = defaultdict(list)
+
+    for task in tasks:
+        for employee in task["employees"]:
+            objects[employee["name"]].append(task)
+        for division in task["divisions"]:
+            objects[division["name"]].append(task)
+
+    content = []
+    for installer in [Installer(name, tasks) for name, tasks in objects.items()]:
+        content.append(installer.format())
+
+    return "\n\n".join([c for c in content if c]) or "Сегодня не было выполнено ни одного задания"
+
+
+def format_operator_tasks(tasks: list[dict]) -> str:
+    objects: dict[str, list[dict]] = defaultdict(list)
+
+    for task in tasks:
+        objects[task["author"]["name"]].append(task)
+
+    content = []
+    for operator in [Operator(name, tasks) for name, tasks in objects.items()]:
+        content.append(operator.format())
+
+    return "\n\n".join([c for c in content if c]) or "За эту смену не было выполнено ни одного задания"
