@@ -24,7 +24,7 @@ dp = Dispatcher()
 INSTALLERS_GROUP_ID = int(getenv("INSTALLERS_GROUP_ID", 0))
 OPERATORS_GROUP_ID = int(getenv("OPERATORS_GROUP_ID", 0))
 
-DAY_SHIFT_OPERATORS = list(map(int, loads(getenv("DAY_SHIFT_OPERATORS", "[]"))))
+MORNING_SHIFT_OPERATORS = list(map(int, loads(getenv("MORNING_SHIFT_OPERATORS", "[]"))))
 NIGHT_SHIFT_OPERATORS = list(map(int, loads(getenv("NIGHT_SHIFT_OPERATORS", "[]"))))
 INSTALLERS = list(map(int, loads(getenv("INSTALLERS", "[]"))))
 
@@ -32,6 +32,8 @@ DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=ZoneInfo(
 DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 NIGHT_START = time.fromisoformat(getenv("NIGHT_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 NIGHT_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+MORNING_START = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+MORNING_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 
 
 async def installer_report():
@@ -42,11 +44,12 @@ async def installer_report():
     print("sent report")
 
 
-async def operator_day_report():
-    print("make operator day report")
+async def operator_morning_report():
+    print("make operator morning report")
     await bot.send_message(
         OPERATORS_GROUP_ID,
-        "<b>Отчет по работе операторов <i>(1 смена)</i></b>\n" + format_operator_tasks(get_operator_tasks(DAY_SHIFT_OPERATORS, DAY_START, DAY_END))
+        "<b>Отчет по работе операторов <i>(1 смена)</i></b>\n"
+        + format_operator_tasks(get_operator_tasks(MORNING_SHIFT_OPERATORS, MORNING_START, MORNING_END))
     )
     print("sent report")
 
@@ -65,7 +68,7 @@ async def operator_night_report():
 async def report(message: Message):
     if message.chat.id == OPERATORS_GROUP_ID:
         if DAY_START < datetime.now().time() < DAY_END:
-            await operator_day_report()
+            await operator_morning_report()
         else:
             await operator_night_report()
 
@@ -79,7 +82,7 @@ async def report(message: Message):
 async def main():
     schedule = Scheduler(tzinfo=ZoneInfo("Asia/Bishkek"))
     schedule.daily(DAY_END, installer_report)
-    schedule.daily(DAY_END, operator_day_report)
+    schedule.daily(MORNING_END, operator_morning_report)
     schedule.daily(NIGHT_END, operator_night_report)
 
     print("start polling")
