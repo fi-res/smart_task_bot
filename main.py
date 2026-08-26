@@ -20,6 +20,7 @@ from api import get_installer_tasks, get_operator_tasks  # noqa # i need to load
 
 bot = Bot(getenv("BOT_TOKEN", ""), default=DefaultBotProperties(parse_mode=ParseMode.HTML))
 dp = Dispatcher()
+bishkek = ZoneInfo("Asia/Bishkek")
 
 INSTALLERS_GROUP_ID = int(getenv("INSTALLERS_GROUP_ID", 0))
 OPERATORS_GROUP_ID = int(getenv("OPERATORS_GROUP_ID", 0))
@@ -28,12 +29,12 @@ MORNING_SHIFT_OPERATORS = list(map(int, loads(getenv("MORNING_SHIFT_OPERATORS", 
 NIGHT_SHIFT_OPERATORS = list(map(int, loads(getenv("NIGHT_SHIFT_OPERATORS", "[]"))))
 INSTALLERS = list(map(int, loads(getenv("INSTALLERS", "[]"))))
 
-DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-NIGHT_START = time.fromisoformat(getenv("NIGHT_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-NIGHT_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-MORNING_START = time.fromisoformat(getenv("MORNING_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-MORNING_END = time.fromisoformat(getenv("MORNING_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=bishkek)
+DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=bishkek)
+NIGHT_START = time.fromisoformat(getenv("NIGHT_START", "")).replace(tzinfo=bishkek)
+NIGHT_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=bishkek)
+MORNING_START = time.fromisoformat(getenv("MORNING_START", "")).replace(tzinfo=bishkek)
+MORNING_END = time.fromisoformat(getenv("MORNING_END", "")).replace(tzinfo=bishkek)
 
 
 async def installer_report():
@@ -67,7 +68,7 @@ async def operator_night_report():
 @dp.message(Command("report"))
 async def report(message: Message):
     if message.chat.id == OPERATORS_GROUP_ID:
-        if MORNING_START < datetime.now().time() < MORNING_END:
+        if MORNING_START < datetime.now(tz=bishkek).time() < MORNING_END:
             await operator_morning_report()
         else:
             await operator_night_report()
