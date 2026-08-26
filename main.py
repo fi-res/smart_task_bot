@@ -32,8 +32,8 @@ DAY_START = time.fromisoformat(getenv("DAY_START", "")).replace(tzinfo=ZoneInfo(
 DAY_END = time.fromisoformat(getenv("DAY_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 NIGHT_START = time.fromisoformat(getenv("NIGHT_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 NIGHT_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-MORNING_START = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
-MORNING_END = time.fromisoformat(getenv("NIGHT_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+MORNING_START = time.fromisoformat(getenv("MORNING_START", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
+MORNING_END = time.fromisoformat(getenv("MORNING_END", "")).replace(tzinfo=ZoneInfo("Asia/Bishkek"))
 
 
 async def installer_report():
@@ -67,7 +67,7 @@ async def operator_night_report():
 @dp.message(Command("report"))
 async def report(message: Message):
     if message.chat.id == OPERATORS_GROUP_ID:
-        if DAY_START < datetime.now().time() < DAY_END:
+        if MORNING_START < datetime.now().time() < MORNING_END:
             await operator_morning_report()
         else:
             await operator_night_report()
